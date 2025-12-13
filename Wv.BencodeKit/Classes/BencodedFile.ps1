@@ -15,7 +15,7 @@ class BencodedFile {
     }
 
     [Void] Init([String] $FilePath) {
-        if (!(Test-Path -Path $FilePath -PathType leaf)) {
+        if (!((Test-Path -Path $FilePath -PathType leaf) -or (Test-Path -LiteralPath $FilePath -PathType leaf))) {
             throw "$FilePath is not a valid path to a file"
         }
 

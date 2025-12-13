@@ -2,16 +2,16 @@ function ConvertFrom-BencodedFile {
     [CmdletBinding(ConfirmImpact='Low')]
     param (
         [Parameter(Mandatory=$True, ValueFromPipeline=$True)]
-        [ValidateScript({ Test-Path -Path $_ })]
+        [ValidateScript({ (Test-Path -Path $_) -or (Test-Path -LiteralPath $_) })]
         [String] $FilePath,
         [Parameter(Mandatory=$False)]
         [System.Text.Encoding] $Encoding = [System.Text.Encoding]::UTF8
     )
-    
+
     begin {
 
     }
-    
+
     process {
         Write-Verbose "Starting conversion of $FilePath to PowerShell object."
         try {
@@ -19,10 +19,12 @@ function ConvertFrom-BencodedFile {
             $BencodedFile.BencodedData
         }
         finally {
-            $BencodedFile.Dispose()
+			if($BencodedFile -ne $null) {
+				$BencodedFile.Dispose()
+			}
         }
     }
-    
+
     end {
         Write-Verbose "Finished."
     }
