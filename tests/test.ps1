@@ -34,7 +34,6 @@ function TestBencodedStringAsList([string]$Data, [string]$Filename, [string]$Msg
 	$Data | Out-File -Path "$PSScriptRoot\$Filename" -NoNewLine
 	try {
 		$bencoded = ConvertFrom-BencodedFile -FilePath "$PSScriptRoot\$Filename"
-		Write-Debug $bencoded.GetType()
 		$result = @{ Value = $bencoded } | ? $Test
 		if( $result.Length -eq 0 ) {
 			throw $Msg
@@ -64,7 +63,7 @@ try {
 	$buffer = InitData (1 * 2 * 1024 * 1024) 1
 	New-Item -Type Directory -Path "$PSScriptRoot\01" -Force
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\01\01_single_file_single_full_piece.bin", $buffer)
-	if(!(Test-TorrentData -Path "$PSScriptRoot\01_single_file_single_full_piece.bin.torrent" -DataDirectory "$PSScriptRoot\01")) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot\01_single_file_single_full_piece.bin.torrent" -DataDirectory "$PSScriptRoot\01").Valid) {
 		throw "Test failed"
 	}
 } finally {
@@ -76,7 +75,7 @@ try {
 	$buffer = InitData (0.6 * 2 * 1024 * 1024) 2
 	New-Item -Type Directory -Path "$PSScriptRoot\02" -Force
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\02\02_single_file_single_less_than_piece.bin", $buffer)
-	if(!(Test-TorrentData -Path "$PSScriptRoot\02_single_file_single_less_than_piece.bin.torrent" -DataDirectory "$PSScriptRoot\02")) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot\02_single_file_single_less_than_piece.bin.torrent" -DataDirectory "$PSScriptRoot\02").Valid) {
 		throw "Test failed"
 	}
 } finally {
@@ -88,7 +87,7 @@ try {
 	$buffer = InitData (2 * 2 * 1024 * 1024) 3
 	New-Item -Type Directory -Path "$PSScriptRoot\03" -Force
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\03\03_single_file_two_full_pieces.bin", $buffer)
-	if(!(Test-TorrentData -Path "$PSScriptRoot\03_single_file_two_full_pieces.bin.torrent" -DataDirectory "$PSScriptRoot\03")) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot\03_single_file_two_full_pieces.bin.torrent" -DataDirectory "$PSScriptRoot\03").Valid) {
 		throw "Test failed"
 	}
 } finally {
@@ -100,7 +99,7 @@ try {
 	$buffer = InitData (1.6 * 2 * 1024 * 1024) 4
 	New-Item -Type Directory -Path "$PSScriptRoot\04" -Force
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\04\04_single_file_less_than_two_pieces.bin", $buffer)
-	if(!(Test-TorrentData -Path "$PSScriptRoot\04_single_file_less_than_two_pieces.bin.torrent" -DataDirectory "$PSScriptRoot\04")) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot\04_single_file_less_than_two_pieces.bin.torrent" -DataDirectory "$PSScriptRoot\04").Valid) {
 		throw "Test failed"
 	}
 } finally {
@@ -114,7 +113,7 @@ try {
 	New-Item -Type Directory -Path "$PSScriptRoot\05" -Force
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\05\05_two_files_single_full_piece_1.bin", $buffer1)
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\05\05_two_files_single_full_piece_2.bin", $buffer2)
-	if(!(Test-TorrentData -Path "$PSScriptRoot\05.torrent" -DataDirectory "$PSScriptRoot\05")) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot\05.torrent" -DataDirectory "$PSScriptRoot\05").Valid) {
 		throw "Test failed"
 	}
 } finally {
@@ -129,7 +128,7 @@ try {
 	New-Item -Type Directory -Path "$PSScriptRoot\06" -Force
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\06\06_1_two_files_less than_a_piece.bin", $buffer1)
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\06\06_2_two_files_more_than_a_piece.bin", $buffer2)
-	if(!(Test-TorrentData -Path "$PSScriptRoot\06.torrent" -DataDirectory "$PSScriptRoot\06")) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot\06.torrent" -DataDirectory "$PSScriptRoot\06").Valid) {
 		throw "Test failed"
 	}
 } finally {
@@ -154,7 +153,7 @@ try {
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\07\2\1\2_1.bin", $buffer4)
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\07\2\2\2_2.bin", $buffer5)
 
-	if(!(Test-TorrentData -Path "$PSScriptRoot\07.torrent" -DataDirectory "$PSScriptRoot\07")) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot\07.torrent" -DataDirectory "$PSScriptRoot\07").Valid) {
 		throw "Test failed"
 	}
 } finally {
@@ -187,7 +186,7 @@ try {
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\08\2\2\2_2.bin", $buffer[10mb..(18mb-1)])
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\08\2\2\2\2_2_2.bin", $buffer[18mb..(20mb-1)])
 
-	if(!(Test-TorrentData -Path "$PSScriptRoot\08.torrent" -DataDirectory "$PSScriptRoot\08")) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot\08.torrent" -DataDirectory "$PSScriptRoot\08").Valid) {
 		throw "Test failed"
 	}
 } finally {
@@ -205,7 +204,7 @@ try {
 	$buffer = InitData (1024 * 1024) 15
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\09\じどうはんばいき、自動販売機.bin", $buffer)
 
-	if(!(Test-TorrentData -Path "$PSScriptRoot\09.torrent" -DataDirectory "$PSScriptRoot\09")) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot\09.torrent" -DataDirectory "$PSScriptRoot\09").Valid) {
 		throw "Test failed"
 	}
 } finally {
@@ -219,9 +218,18 @@ try {
 	$buffer[$buffer.Length - 1] = $buffer[$buffer.Length - 1] -bxor 255
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\10\1.bin", $buffer)
 
-	if((Test-TorrentData -Path "$PSScriptRoot\10.torrent" -DataDirectory "$PSScriptRoot\10")) {
+	if((Test-TorrentData -Path "$PSScriptRoot\10.torrent" -DataDirectory "$PSScriptRoot\10").Valid) {
 		throw "Test failed : check should fail"
 	}
 } finally {
 	Remove-Item "$PSScriptRoot\10\1.bin"
+}
+
+try {
+	Test-TorrentData -Path "$PSScriptRoot\05.torrent" -LiteralPath "$PSScriptRoot\05.torrent"
+	throw "Test failed : should fail because Path and LiteralPath are specified at the same time"
+} catch {
+	if( $_.Exception.ErrorId -ne "AmbiguousParameterSet" ) {
+		throw "Test failed : should fail because Path and LiteralPath are specified at the same time, got another error"
+	}
 }

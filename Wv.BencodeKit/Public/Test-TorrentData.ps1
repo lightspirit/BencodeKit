@@ -7,22 +7,24 @@ function GetFilename($file) {
 }
 
 function Test-TorrentData {
-    [CmdletBinding(ConfirmImpact='Low')]
-    param (
-        [Parameter(Mandatory=$True, ValueFromPipeline=$True)]
-        [ValidateScript({ (Test-Path -Path $_) -or (Test-Path -LiteralPath $_) })]
-        [String] $Path,
-        [Parameter(Mandatory=$False)]
-        [System.Text.Encoding] $Encoding = [System.Text.Encoding]::UTF8,
-        [Parameter(Mandatory=$True)]
+	[CmdletBinding(ConfirmImpact='Low')]
+	param (
+		[Parameter(Mandatory=$True, ParameterSetName = 'Path', ValueFromPipeline=$True)]
+		[ValidateScript({ Test-Path -Path $_ })]
+		[String] $Path,
+		[Parameter(Mandatory=$True, ParameterSetName = 'LiteralPath')]
 		[ValidateScript({ Test-Path -LiteralPath $_ })]
-        [String] $DataDirectory
-    )
+		[String] $LiteralPath,
+		[Parameter(Mandatory=$False)]
+		[System.Text.Encoding] $Encoding = [System.Text.Encoding]::UTF8,
+		[ValidateScript({ Test-Path -LiteralPath $_ })]
+		[String] $DataDirectory
+	)
 
-    begin {
-    }
+	begin {
+	}
 
-    process {
+	process {
 		$Torrent = ConvertFrom-BencodedFile -FilePath $Path -Encoding $Encoding
 		$pieceLength = $Torrent.info."piece length"
 		$piecesCount = $Torrent.info.pieces.bytestring.Length / 20
@@ -51,7 +53,10 @@ function Test-TorrentData {
 					Write-Verbose "Piece $($p.ToString().PadLeft(4)) : $bufferHashHex / $pieceHashHex => $valid"
 				}
 
-				$valid
+				[pscustomobject]@{
+					Path	= $TargetFile
+					Valid	= $valid
+				}
 			}
 			finally {
 				if( $br ) {
@@ -99,7 +104,10 @@ function Test-TorrentData {
 					Write-Verbose "Piece $($p.ToString().PadLeft(4)) : $bufferHashHex / $pieceHashHex => $valid"
 				}
 
-				$valid
+				[pscustomobject]@{
+					Path	= $TargetFile
+					Valid	= $valid
+				}
 			}
 			finally {
 				if( $br -ne $null ) {
@@ -112,7 +120,7 @@ function Test-TorrentData {
 		}
 	}
 
-    end {
-        Write-Verbose "Finished."
-    }
+	end {
+		Write-Verbose "Finished."
+	}
 }
