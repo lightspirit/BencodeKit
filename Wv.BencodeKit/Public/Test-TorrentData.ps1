@@ -9,14 +9,16 @@ function GetFilename($file) {
 function Test-TorrentData {
 	[CmdletBinding(ConfirmImpact='Low')]
 	param (
-		[Parameter(Mandatory=$True, ParameterSetName = 'Path', ValueFromPipeline=$True)]
+		[SupportsWildcards()]
+		[Parameter(Mandatory=$True, ParameterSetName = 'Path', ValueFromPipeline=$True, HelpMessage = 'Wildcards supported torrent files path. Can be relative.')]
 		[ValidateScript({ Test-Path -Path $_ })]
 		[String] $Path,
-		[Parameter(Mandatory=$True, ParameterSetName = 'LiteralPath')]
+		[Parameter(Mandatory=$True, ParameterSetName = 'LiteralPath', HelpMessage = 'Torrent file path. Can be relative.')]
 		[ValidateScript({ Test-Path -LiteralPath $_ })]
 		[String] $LiteralPath,
-		[Parameter(Mandatory=$False)]
+		[Parameter(Mandatory=$False, HelpMessage = 'Torrent file encoding. Default to UTF-8.')]
 		[System.Text.Encoding] $Encoding = [System.Text.Encoding]::UTF8,
+		[Parameter(HelpMessage = 'Directory where torrent data files are stored.')]
 		[ValidateScript({ Test-Path -LiteralPath $_ })]
 		[String] $DataDirectory
 	)
@@ -45,7 +47,7 @@ function Test-TorrentData {
 			Write-Progress -Id 0 -Activity "Verifying torrent files data" -PercentComplete (100 * $i / $resolvedPaths.Length) -CurrentOperation $resolvedPath -ProgressAction ($resolvedPaths.Length -gt 1 ? $ProgressPreference : "SilentlyContinue")
 
 			$Torrent = ConvertFrom-BencodedFile -FilePath $resolvedPath -Encoding $Encoding
-			$pieceLength = $Torrent.info."piece length"
+			$pieceLength = $Torrent.info.'piece length'
 			$piecesCount = $Torrent.info.pieces.bytestring.Length / 20
 
 			if( $Torrent.info.files -eq $null ) {
@@ -67,7 +69,7 @@ function Test-TorrentData {
 						Write-Verbose "Piece $($p.ToString().PadLeft(6)) : $bufferHashHex / $pieceHashHex => $valid"
 						$currentTime = Get-Date
 						$timeSpent = $currentTime - $startTime
-						Write-Progress -Id 1 -Parent 0 -Activity "Verifying..." -Status "$(($totalBytesRead / 1mb / $timeSpent.TotalSeconds).ToString('#')) MiB/s average" -CurrentOperation $TargetFile -PercentComplete (100 * ($p + 1) / $piecesCount)
+						Write-Progress -Id 1 -Parent 0 -Activity 'Verifying...' -Status "$(($totalBytesRead / 1mb / $timeSpent.TotalSeconds).ToString('#')) MiB/s average" -CurrentOperation $TargetFile -PercentComplete (100 * ($p + 1) / $piecesCount)
 					}
 
 					[pscustomobject]@{
@@ -86,7 +88,7 @@ function Test-TorrentData {
 			} else {
 				try {
 					# Multiple files torrent
-					$hasher = [System.Security.Cryptography.HashAlgorithm]::Create("SHA1")
+					$hasher = [System.Security.Cryptography.HashAlgorithm]::Create('SHA1')
 					$f = 0
 					$file = $Torrent.info.files[$f]
 					$filename = GetFilename $file
@@ -122,7 +124,7 @@ function Test-TorrentData {
 						Write-Verbose "Piece $($p.ToString().PadLeft(6)) : $bufferHashHex / $pieceHashHex => $valid"
 						$currentTime = Get-Date
 						$timeSpent = $currentTime - $startTime
-						Write-Progress -Id 1 -Parent 0 -Activity "Verifying..." -Status "$(($totalBytesRead / 1mb / $timeSpent.TotalSeconds).ToString('#')) MiB/s average" -CurrentOperation $TargetFile -PercentComplete (100 * ($p + 1) / $piecesCount)
+						Write-Progress -Id 1 -Parent 0 -Activity 'Verifying...' -Status "$(($totalBytesRead / 1mb / $timeSpent.TotalSeconds).ToString('#')) MiB/s average" -CurrentOperation $TargetFile -PercentComplete (100 * ($p + 1) / $piecesCount)
 					}
 
 					[pscustomobject]@{
