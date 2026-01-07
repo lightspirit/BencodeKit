@@ -1,3 +1,11 @@
+function GetFilename($file) {
+	if( $file.path -is [System.Collections.Generic.List[psobject]] ) {
+		[System.IO.Path]::Combine([string[]]($file.path | % { $_.string }))
+	} else {
+		$file.path.string
+	}
+}
+
 function Test-TorrentData {
     [CmdletBinding(ConfirmImpact='Low')]
     param (
@@ -7,9 +15,8 @@ function Test-TorrentData {
         [Parameter(Mandatory=$False)]
         [System.Text.Encoding] $Encoding = [System.Text.Encoding]::UTF8,
         [Parameter(Mandatory=$True)]
-		[ValidateScript({ (Test-Path -Path $_) -or (Test-Path -LiteralPath $_) })]
+		[ValidateScript({ Test-Path -LiteralPath $_ })]
         [String] $DataDirectory
-		# [System.IO.DirectoryInfo]
     )
 
     begin {
@@ -19,13 +26,18 @@ function Test-TorrentData {
 		$Torrent = ConvertFrom-BencodedFile -FilePath $Path -Encoding $Encoding
 		$pieceLength = $Torrent.info."piece length"
 		$piecesCount = $Torrent.info.pieces.bytestring.Length / 20
-		$TargetFile = Join-Path $DataDirectory $Torrent.info.name.string
+
+		$resolvedDataDirectoryPath = Resolve-Path -LiteralPath $DataDirectory
+		Write-Verbose $resolvedDataDirectoryPath
+
 		#$buffer = [array]::CreateInstance([byte], $pieceLength)
 		$valid = $true
 
 		if( $Torrent.info.files -eq $null ) {
+			$TargetFile = Join-Path $resolvedDataDirectoryPath $Torrent.info.name.string
+			Write-Debug "Opening file $TargetFile"
 			try {
-				$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open)
+				$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
 				$br = [System.IO.BinaryReader]::new($fs)
 				$hasher = [System.Security.Cryptography.HashAlgorithm]::Create("SHA1")
 				# Single file torrent
@@ -55,8 +67,8 @@ function Test-TorrentData {
 				$hasher = [System.Security.Cryptography.HashAlgorithm]::Create("SHA1")
 				$f = 0
 				$file = $Torrent.info.files[$f]
-				$filename = $file.path.string
-				$TargetFile = Join-Path $DataDirectory $filename
+				$filename = GetFilename $file
+				$TargetFile = Join-Path $resolvedDataDirectoryPath $filename
 				Write-Debug "Opening file $TargetFile"
 				$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open)
 				$br = [System.IO.BinaryReader]::new($fs)
@@ -72,10 +84,10 @@ function Test-TorrentData {
 						$remaining = $pieceLength - $buffer.Length
 						$f++
 						$file = $Torrent.info.files[$f]
-						$filename = $file.path.string
-						$TargetFile = Join-Path $DataDirectory $filename
-						Write-Debug "Opening new file $TargetFile"
-						$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open)
+						$filename = GetFilename $file
+						$TargetFile = Join-Path $resolvedDataDirectoryPath $filename
+						Write-Debug "Opening file $TargetFile"
+						$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
 						$br = [System.IO.BinaryReader]::new($fs)
 						$tmpBuffer = $br.ReadBytes($remaining)
 						$buffer = $buffer + $tmpBuffer

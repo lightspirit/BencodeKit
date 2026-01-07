@@ -1,3 +1,5 @@
+# Run with pwsh.exe -NonInteractive -File .\tests\test.ps1
+
 Import-Module "$PSScriptRoot\..\Wv.BencodeKit" -Force
 
 Function InitData {
@@ -18,7 +20,6 @@ Function TestBencodedString([string]$Data, [string]$Filename, [string]$Msg, [scr
 	$Data | Out-File -Path "$PSScriptRoot\$Filename" -NoNewLine
 	try {
 		$bencoded = ConvertFrom-BencodedFile -FilePath "$PSScriptRoot\$Filename"
-		Write-Debug $bencoded.GetType()
 		$result = @( $bencoded ) | ? $Test
 		if( $result.Length -eq 0 ) {
 			throw $Msg
@@ -134,4 +135,66 @@ try {
 } finally {
 	Remove-Item -Path "$PSScriptRoot\06\06_1_two_files_less than_a_piece.bin"
 	Remove-Item -Path "$PSScriptRoot\06\06_2_two_files_more_than_a_piece.bin"
+}
+
+# Nested folders - Each file is a single piece
+# 1 MiB piece / 1 MiB file
+try {
+	New-Item -Type Directory -Path "$PSScriptRoot\07\1" -Force
+	New-Item -Type Directory -Path "$PSScriptRoot\07\2\1" -Force
+	New-Item -Type Directory -Path "$PSScriptRoot\07\2\2" -Force
+	$buffer1 = InitData (1 * 1024 * 1024) 9
+	$buffer2 = InitData (1 * 1024 * 1024) 10
+	$buffer3 = InitData (1 * 1024 * 1024) 11
+	$buffer4 = InitData (1 * 1024 * 1024) 12
+	$buffer5 = InitData (1 * 1024 * 1024) 13
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\07\root.bin", $buffer1)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\07\1\1.bin", $buffer2)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\07\2\1.bin", $buffer3)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\07\2\1\2_1.bin", $buffer4)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\07\2\2\2_2.bin", $buffer5)
+
+	if(!(Test-TorrentData -Path "$PSScriptRoot\07.torrent" -DataDirectory "$PSScriptRoot\07")) {
+		throw "Test failed"
+	}
+} finally {
+	Remove-Item "$PSScriptRoot\07\root.bin"
+	Remove-Item "$PSScriptRoot\07\1\1.bin"
+	Remove-Item "$PSScriptRoot\07\2\1.bin"
+	Remove-Item "$PSScriptRoot\07\2\1\2_1.bin"
+	Remove-Item "$PSScriptRoot\07\2\2\2_2.bin"
+}
+
+# Nested folders - Files with shared piece
+
+# +--------+---------+---------+---------+---------+---------+
+# +        0         4         8        12        16        20
+# +--------+---------+---------+---------+---------+---------+
+# | Pieces |    1    |    2    |    3    |    4    |    5    |
+# +--------+---------+---+---+-+---+-----+---------+---------+
+# | Files  |    1    | 2 | 3 |  4  |          5         | 6  |
+# +--------+---------+---+---+-----+--------------------+----+
+
+try {
+	New-Item -Type Directory -Path "$PSScriptRoot\08\1" -Force
+	New-Item -Type Directory -Path "$PSScriptRoot\08\2\1" -Force
+	New-Item -Type Directory -Path "$PSScriptRoot\08\2\2\2" -Force
+	$buffer = InitData (20 * 1024 * 1024) 14
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\08\root.bin", $buffer[0..(4mb-1)])
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\08\1\1.bin", $buffer[4mb..(6mb-1)])
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\08\2\1.bin", $buffer[6mb..(7mb-1)])
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\08\2\1\2_1.bin", $buffer[7mb..(10mb-1)])
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\08\2\2\2_2.bin", $buffer[10mb..(18mb-1)])
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\08\2\2\2\2_2_2.bin", $buffer[18mb..(20mb-1)])
+
+	if(!(Test-TorrentData -Path "$PSScriptRoot\08.torrent" -DataDirectory "$PSScriptRoot\08")) {
+		throw "Test failed"
+	}
+} finally {
+	Remove-Item "$PSScriptRoot\08\root.bin"
+	Remove-Item "$PSScriptRoot\08\1\1.bin"
+	Remove-Item "$PSScriptRoot\08\2\1.bin"
+	Remove-Item "$PSScriptRoot\08\2\1\2_1.bin"
+	Remove-Item "$PSScriptRoot\08\2\2\2_2.bin"
+	Remove-Item "$PSScriptRoot\08\2\2\2\2_2_2.bin"
 }
