@@ -63,7 +63,7 @@ try {
 	$buffer = InitData (1 * 2 * 1024 * 1024) 1
 	New-Item -Type Directory -Path "$PSScriptRoot\01" -Force
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\01\01_single_file_single_full_piece.bin", $buffer)
-	if(!(Test-TorrentData -Path "$PSScriptRoot\01_single_file_single_full_piece.bin.torrent" -DataDirectory "$PSScriptRoot\01").Valid) {
+	if(!(Test-TorrentData -LiteralPath "$PSScriptRoot\01_single_file_single_full_piece.bin.torrent" -DataDirectory "$PSScriptRoot\01").Valid) {
 		throw "Test failed"
 	}
 } finally {
@@ -75,7 +75,7 @@ try {
 	$buffer = InitData (0.6 * 2 * 1024 * 1024) 2
 	New-Item -Type Directory -Path "$PSScriptRoot\02" -Force
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\02\02_single_file_single_less_than_piece.bin", $buffer)
-	if(!(Test-TorrentData -Path "$PSScriptRoot\02_single_file_single_less_than_piece.bin.torrent" -DataDirectory "$PSScriptRoot\02").Valid) {
+	if(!(Test-TorrentData -LiteralPath "$PSScriptRoot\02_single_file_single_less_than_piece.bin.torrent" -DataDirectory "$PSScriptRoot\02").Valid) {
 		throw "Test failed"
 	}
 } finally {
@@ -232,4 +232,24 @@ try {
 	if( $_.Exception.ErrorId -ne "AmbiguousParameterSet" ) {
 		throw "Test failed : should fail because Path and LiteralPath are specified at the same time, got another error"
 	}
+}
+
+# Multiple checks
+try {
+	$buffer1 = InitData (1 * 2 * 1024 * 1024) 1
+	New-Item -Type Directory -Path "$PSScriptRoot\01" -Force
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\01_single_file_single_full_piece.bin", $buffer1)
+
+	$buffer2 = InitData (0.6 * 2 * 1024 * 1024) 2
+	New-Item -Type Directory -Path "$PSScriptRoot\02" -Force
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\02_single_file_single_less_than_piece.bin", $buffer2)
+
+	$r = Test-TorrentData -Path "$PSScriptRoot\0[12]_single_file_single*.torrent" -DataDirectory "$PSScriptRoot"
+	$r.Path
+	if( ($r.Valid | ? { $_ }).Length -ne 2 ) {
+		throw "Test failed"
+	}
+} finally {
+	Remove-Item -Path "$PSScriptRoot\01_single_file_single_full_piece.bin"
+	Remove-Item -Path "$PSScriptRoot\02_single_file_single_less_than_piece.bin"
 }

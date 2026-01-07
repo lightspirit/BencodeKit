@@ -25,96 +25,118 @@ function Test-TorrentData {
 	}
 
 	process {
-		$Torrent = ConvertFrom-BencodedFile -FilePath $Path -Encoding $Encoding
-		$pieceLength = $Torrent.info."piece length"
-		$piecesCount = $Torrent.info.pieces.bytestring.Length / 20
-
 		$resolvedDataDirectoryPath = Resolve-Path -LiteralPath $DataDirectory
 		Write-Verbose $resolvedDataDirectoryPath
 
+		if( $Path ) {
+			$resolvedPaths = Resolve-Path -Path $Path
+		} else {
+			$resolvedPaths = Resolve-Path -LiteralPath $LiteralPath
+		}
+
 		#$buffer = [array]::CreateInstance([byte], $pieceLength)
 		$valid = $true
+		$startTime = Get-Date
+		$totalBytesRead = 0
 
-		if( $Torrent.info.files -eq $null ) {
-			$TargetFile = Join-Path $resolvedDataDirectoryPath $Torrent.info.name.string
-			Write-Debug "Opening file $TargetFile"
-			try {
-				$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
-				$br = [System.IO.BinaryReader]::new($fs)
-				$hasher = [System.Security.Cryptography.HashAlgorithm]::Create("SHA1")
-				# Single file torrent
-				for( $p = 0 ; $valid -and $p -lt $piecesCount ; $p++ ) {
-					# public virtual int Read (byte[] buffer, int index, int count);
-					# $br.Read($buffer)
-					$buffer = $br.ReadBytes($pieceLength)
-					$bufferHashHex = [System.Convert]::ToHexString($hasher.ComputeHash($buffer))
-					$pieceHashHex = [System.Convert]::ToHexString($Torrent.info.pieces.bytestring[(20 * $p)..(20 * $p + 19)])
-					$valid = $bufferHashHex -eq $pieceHashHex
-					Write-Verbose "Piece $($p.ToString().PadLeft(4)) : $bufferHashHex / $pieceHashHex => $valid"
-				}
+		for( $i = 0 ; $i -lt $resolvedPaths.Length ; $i++ ) {
+			$resolvedPath = $resolvedPaths[$i].Path
+			Write-Debug $resolvedPath
+			Write-Progress -Id 0 -Activity "Verifying torrent files data" -PercentComplete (100 * $i / $resolvedPaths.Length) -CurrentOperation $resolvedPath -ProgressAction ($resolvedPaths.Length -gt 1 ? $ProgressPreference : "SilentlyContinue")
 
-				[pscustomobject]@{
-					Path	= $TargetFile
-					Valid	= $valid
-				}
-			}
-			finally {
-				if( $br ) {
-					$br.Close()
-				}
-				if( $fs ) {
-					$fs.Close()
-				}
-			}
-		} else {
-			try {
-				# Multiple files torrent
-				$hasher = [System.Security.Cryptography.HashAlgorithm]::Create("SHA1")
-				$f = 0
-				$file = $Torrent.info.files[$f]
-				$filename = GetFilename $file
-				$TargetFile = Join-Path $resolvedDataDirectoryPath $filename
+			$Torrent = ConvertFrom-BencodedFile -FilePath $resolvedPath -Encoding $Encoding
+			$pieceLength = $Torrent.info."piece length"
+			$piecesCount = $Torrent.info.pieces.bytestring.Length / 20
+
+			if( $Torrent.info.files -eq $null ) {
+				$TargetFile = Join-Path $resolvedDataDirectoryPath $Torrent.info.name.string
 				Write-Debug "Opening file $TargetFile"
-				$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open)
-				$br = [System.IO.BinaryReader]::new($fs)
-				for( $p = 0 ; $valid -and $p -lt $piecesCount ; $p++ ) {
-					$buffer = $br.ReadBytes($pieceLength)
-
-					# EOF of current file
-					# trying to open and read next file(s) to complete the buffer
-					# TODO : optimized read for small and big piece sizes
-					while( $buffer.Length -lt $pieceLength -and $f -lt ($Torrent.info.files.Count - 1) )  {
-						$br.Close()
-						$fs.Close()
-						$remaining = $pieceLength - $buffer.Length
-						$f++
-						$file = $Torrent.info.files[$f]
-						$filename = GetFilename $file
-						$TargetFile = Join-Path $resolvedDataDirectoryPath $filename
-						Write-Debug "Opening file $TargetFile"
-						$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
-						$br = [System.IO.BinaryReader]::new($fs)
-						$tmpBuffer = $br.ReadBytes($remaining)
-						$buffer = $buffer + $tmpBuffer
+				try {
+					$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
+					$br = [System.IO.BinaryReader]::new($fs)
+					$hasher = [System.Security.Cryptography.HashAlgorithm]::Create("SHA1")
+					# Single file torrent
+					for( $p = 0 ; $valid -and $p -lt $piecesCount ; $p++ ) {
+						# public virtual int Read (byte[] buffer, int index, int count);
+						# $br.Read($buffer)
+						$buffer = $br.ReadBytes($pieceLength)
+						$totalBytesRead += $buffer.Length
+						$bufferHashHex = [System.Convert]::ToHexString($hasher.ComputeHash($buffer))
+						$pieceHashHex = [System.Convert]::ToHexString($Torrent.info.pieces.bytestring[(20 * $p)..(20 * $p + 19)])
+						$valid = $bufferHashHex -eq $pieceHashHex
+						Write-Verbose "Piece $($p.ToString().PadLeft(6)) : $bufferHashHex / $pieceHashHex => $valid"
+						$currentTime = Get-Date
+						$timeSpent = $currentTime - $startTime
+						Write-Progress -Id 1 -Parent 0 -Activity "Verifying..." -Status "$(($totalBytesRead / 1mb / $timeSpent.TotalSeconds).ToString('#')) MiB/s average" -CurrentOperation $TargetFile -PercentComplete (100 * ($p + 1) / $piecesCount)
 					}
 
-					$bufferHashHex = [System.Convert]::ToHexString($hasher.ComputeHash($buffer))
-					$pieceHashHex = [System.Convert]::ToHexString($Torrent.info.pieces.bytestring[(20 * $p)..(20 * $p + 19)])
-					$valid = $bufferHashHex -eq $pieceHashHex
-					Write-Verbose "Piece $($p.ToString().PadLeft(4)) : $bufferHashHex / $pieceHashHex => $valid"
+					[pscustomobject]@{
+						Path	= $TargetFile
+						Valid	= $valid
+					}
 				}
+				finally {
+					if( $br ) {
+						$br.Close()
+					}
+					if( $fs ) {
+						$fs.Close()
+					}
+				}
+			} else {
+				try {
+					# Multiple files torrent
+					$hasher = [System.Security.Cryptography.HashAlgorithm]::Create("SHA1")
+					$f = 0
+					$file = $Torrent.info.files[$f]
+					$filename = GetFilename $file
+					$TargetFile = Join-Path $resolvedDataDirectoryPath $filename
+					Write-Debug "Opening file $TargetFile"
+					$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
+					$br = [System.IO.BinaryReader]::new($fs)
+					for( $p = 0 ; $valid -and $p -lt $piecesCount ; $p++ ) {
+						$buffer = $br.ReadBytes($pieceLength)
 
-				[pscustomobject]@{
-					Path	= $TargetFile
-					Valid	= $valid
+						# EOF of current file
+						# trying to open and read next file(s) to complete the buffer
+						# TODO : optimized read for small and big piece sizes
+						while( $buffer.Length -lt $pieceLength -and $f -lt ($Torrent.info.files.Count - 1) )  {
+							$br.Close()
+							$fs.Close()
+							$remaining = $pieceLength - $buffer.Length
+							$f++
+							$file = $Torrent.info.files[$f]
+							$filename = GetFilename $file
+							$TargetFile = Join-Path $resolvedDataDirectoryPath $filename
+							Write-Debug "Opening file $TargetFile"
+							$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
+							$br = [System.IO.BinaryReader]::new($fs)
+							$tmpBuffer = $br.ReadBytes($remaining)
+							$buffer = $buffer + $tmpBuffer
+						}
+
+						$totalBytesRead += $buffer.Length
+						$bufferHashHex = [System.Convert]::ToHexString($hasher.ComputeHash($buffer))
+						$pieceHashHex = [System.Convert]::ToHexString($Torrent.info.pieces.bytestring[(20 * $p)..(20 * $p + 19)])
+						$valid = $bufferHashHex -eq $pieceHashHex
+						Write-Verbose "Piece $($p.ToString().PadLeft(6)) : $bufferHashHex / $pieceHashHex => $valid"
+						$currentTime = Get-Date
+						$timeSpent = $currentTime - $startTime
+						Write-Progress -Id 1 -Parent 0 -Activity "Verifying..." -Status "$(($totalBytesRead / 1mb / $timeSpent.TotalSeconds).ToString('#')) MiB/s average" -CurrentOperation $TargetFile -PercentComplete (100 * ($p + 1) / $piecesCount)
+					}
+
+					[pscustomobject]@{
+						Path	= $TargetFile
+						Valid	= $valid
+					}
 				}
-			}
-			finally {
-				if( $br -ne $null ) {
-					$br.Close()
-				}
-				if( $fs -ne $null ) {
-					$fs.Close()
+				finally {
+					if( $br -ne $null ) {
+						$br.Close()
+					}
+					if( $fs -ne $null ) {
+						$fs.Close()
+					}
 				}
 			}
 		}
