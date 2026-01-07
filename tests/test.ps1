@@ -198,3 +198,30 @@ try {
 	Remove-Item "$PSScriptRoot\08\2\2\2_2.bin"
 	Remove-Item "$PSScriptRoot\08\2\2\2\2_2_2.bin"
 }
+
+# Unicode characters
+try {
+	New-Item -Type Directory -Path "$PSScriptRoot\09" -Force
+	$buffer = InitData (1024 * 1024) 15
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\09\じどうはんばいき、自動販売機.bin", $buffer)
+
+	if(!(Test-TorrentData -Path "$PSScriptRoot\09.torrent" -DataDirectory "$PSScriptRoot\09")) {
+		throw "Test failed"
+	}
+} finally {
+	Remove-Item "$PSScriptRoot\09\じどうはんばいき、自動販売機.bin"
+}
+
+# Check for invalid byte
+try {
+	New-Item -Type Directory -Path "$PSScriptRoot\10" -Force
+	$buffer = InitData (1024 * 1024) 16
+	$buffer[$buffer.Length - 1] = $buffer[$buffer.Length - 1] -bxor 255
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot\10\1.bin", $buffer)
+
+	if((Test-TorrentData -Path "$PSScriptRoot\10.torrent" -DataDirectory "$PSScriptRoot\10")) {
+		throw "Test failed : check should fail"
+	}
+} finally {
+	Remove-Item "$PSScriptRoot\10\1.bin"
+}
