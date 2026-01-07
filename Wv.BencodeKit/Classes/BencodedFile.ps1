@@ -202,7 +202,7 @@ class BencodedFile {
         $String = $this.Encoding.GetString($Bytes)
         
         $this.AdvancePosition($OffsetOfColon + $ContentLength + 1)
-        Write-Host "String is $String"
+        Write-Verbose "String is $String"
         return $String
     }
 
@@ -216,7 +216,7 @@ class BencodedFile {
         $Hashtable.Add('string', $this.Encoding.GetString($Bytes))
         
         $this.AdvancePosition($OffsetOfColon + $ContentLength + 1)
-        Write-Host "ByteString length is $($Bytes.Length)"
+        Write-Verbose "ByteString length is $($Bytes.Length)"
         return $Hashtable
     }
 

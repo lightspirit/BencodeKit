@@ -36,7 +36,7 @@ function Test-TorrentData {
 					$bufferHashHex = [System.Convert]::ToHexString($hasher.ComputeHash($buffer))
 					$pieceHashHex = [System.Convert]::ToHexString($Torrent.info.pieces.bytestring[(20 * $p)..(20 * $p + 19)])
 					$valid = $bufferHashHex -eq $pieceHashHex
-					Write-Debug "Piece $($p.ToString().PadLeft(4)) : $bufferHashHex / $pieceHashHex => $valid"
+					Write-Verbose "Piece $($p.ToString().PadLeft(4)) : $bufferHashHex / $pieceHashHex => $valid"
 				}
 
 				$valid
@@ -84,7 +84,7 @@ function Test-TorrentData {
 					$bufferHashHex = [System.Convert]::ToHexString($hasher.ComputeHash($buffer))
 					$pieceHashHex = [System.Convert]::ToHexString($Torrent.info.pieces.bytestring[(20 * $p)..(20 * $p + 19)])
 					$valid = $bufferHashHex -eq $pieceHashHex
-					Write-Debug "Piece $($p.ToString().PadLeft(4)) : $bufferHashHex / $pieceHashHex => $valid"
+					Write-Verbose "Piece $($p.ToString().PadLeft(4)) : $bufferHashHex / $pieceHashHex => $valid"
 				}
 
 				$valid
