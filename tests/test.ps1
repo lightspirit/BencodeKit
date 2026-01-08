@@ -299,12 +299,20 @@ try {
 ########################################
 
 # File with invalid character
+if( $IsLinux ) {
+	$os = "linux"
+} elseif( $IsWindows ) {
+	$os = "win"
+} else {
+	Write-Warning "Unsupported OS"
+} 
+
 try {
 	$buffer = InitData (1024 * 1024) 20
 	New-Item -Type Directory -Path "$PSScriptRoot/13" -Force | Out-Null
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot/13/a_b.bin", $buffer)
 
-	if(!(Test-TorrentData -Path "$PSScriptRoot/13.torrent" -DataDirectory "$PSScriptRoot").Valid) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot/13_$os.torrent" -DataDirectory "$PSScriptRoot").Valid) {
 		throw "Test failed"
 	}
 } finally {
@@ -316,8 +324,8 @@ try {
 	$buffer = InitData (1024 * 1024) 21
 	New-Item -Type Directory -Path "$PSScriptRoot/14/a_b" -Force | Out-Null
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot/14/a_b/1.bin", $buffer)
-	Pause
-	if(!(Test-TorrentData -Path "$PSScriptRoot/14.torrent" -DataDirectory "$PSScriptRoot").Valid) {
+
+	if(!(Test-TorrentData -Path "$PSScriptRoot/14_$os.torrent" -DataDirectory "$PSScriptRoot").Valid) {
 		throw "Test failed"
 	}
 } finally {
