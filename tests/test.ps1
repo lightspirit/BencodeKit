@@ -16,6 +16,7 @@ Function InitData {
 }
 
 $DebugPreference = 'Continue'
+$ErrorActionPreference = 'Stop'
 
 Function TestBencodedString([string]$Data, [string]$Filename, [string]$Msg, [scriptblock]$Test) {
 	$Data | Out-File -Path "$PSScriptRoot/$Filename" -NoNewLine
