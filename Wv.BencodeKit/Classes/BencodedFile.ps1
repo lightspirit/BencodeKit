@@ -10,6 +10,7 @@ class BencodedFile {
     }
     
     BencodedFile([String] $FilePath, [System.Text.Encoding] $Encoding) {
+		Write-Debug $Encoding
         $this.Encoding = $Encoding
         $this.Init($FilePath)
     }

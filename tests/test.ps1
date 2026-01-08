@@ -1,6 +1,7 @@
 # Run with pwsh.exe -NonInteractive -File .\tests\test.ps1
 
 Import-Module "$PSScriptRoot\..\Wv.BencodeKit" -Force
+Import-Module "$PSScriptRoot\..\TorrentChecker" -Force
 
 Function InitData {
 	param (
@@ -315,7 +316,7 @@ try {
 	$buffer = InitData (1024 * 1024) 21
 	New-Item -Type Directory -Path "$PSScriptRoot\14\a_b" -Force | Out-Null
 	[System.IO.File]::WriteAllBytes("$PSScriptRoot\14\a_b\1.bin", $buffer)
-
+	Pause
 	if(!(Test-TorrentData -Path "$PSScriptRoot\14.torrent" -DataDirectory "$PSScriptRoot").Valid) {
 		throw "Test failed"
 	}
