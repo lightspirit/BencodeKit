@@ -15,12 +15,11 @@ class BencodedFile {
     }
 
     [Void] Init([String] $FilePath) {
-        if (!((Test-Path -Path $FilePath -PathType leaf) -or (Test-Path -LiteralPath $FilePath -PathType leaf))) {
+        if (!(Test-Path -LiteralPath $FilePath -PathType leaf)) {
             throw "$FilePath is not a valid path to a file"
         }
 
-        $this.File = Get-Item -Path $FilePath
-        $this.Stream = [System.IO.FileStream]::new([string]$FilePath, 'Open')
+        $this.Stream = [System.IO.FileStream]::new([string]$FilePath, 'Open', 'Read')
         $this.Reader = [System.IO.BinaryReader]::new($this.Stream, $this.Encoding)
         $this.BencodedData = $this.DoDecode()
     }
