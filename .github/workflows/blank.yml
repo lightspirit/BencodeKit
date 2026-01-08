@@ -42,4 +42,4 @@ jobs:
         run: rm powershell_7.5.4-1.deb_amd64.deb
 
       - name: Running tests...
-        run: pwsh -NonInteractive -File ./tests/tests.ps1
+        run: pwsh -NonInteractive -File ./tests/test.ps1
