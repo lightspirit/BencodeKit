@@ -1,3 +1,55 @@
+enum ContentLayout {
+	# Depends on torrent
+	# Single file : no sub directory
+	# Multiple files : subdirectory
+	Original
+	# Always create a directory
+	CreateSubFolder
+	# Never create a directory
+	NoSubFolder
+}
+
+function Remove-InvalidPathChars($Path) {
+	$InvalidPathChars = [IO.Path]::GetInvalidPathChars() -join ''
+	$InvalidFileNameChars = [IO.Path]::GetInvalidFileNameChars() -join ''
+
+	$regexPath = "[{0}]" -f [regex]::Escape($InvalidPathChars)
+	$regexFileName = "[{0}]" -f [regex]::Escape($InvalidFileNameChars)
+	$fi = [System.IO.FileInfo]$Path
+
+	# qBittorrent replaces invalid chars with underscores
+	Join-Path ($fi.DirectoryName -replace $regexPath,'_') ($fi.Name -replace $regexFileName,'_')
+}
+
+function GetTargetDirectory([ContentLayout]$ContentLayout, $Torrent, $Directory) {
+	switch($ContentLayout) {
+		([ContentLayout]::Original) {
+			if( $Torrent.info.files -eq $null ) {
+				# single file
+				$Directory
+			} else {
+				# single file in a directory or multiple files
+				Join-Path $Directory $Torrent.info.name.string
+			}
+		}
+		([ContentLayout]::CreateSubFolder) {
+			if( $Torrent.info.files -eq $null ) {
+				# single file : use file base name
+				Join-Path $Directory ([System.IO.Path]::GetFileNameWithoutExtension($Torrent.info.name.string))
+			} else {
+				# same as Original : single file in a directory or multiple files
+				Join-Path $Directory $Torrent.info.name.string
+			}
+		}
+		([ContentLayout]::NoSubFolder) {
+			$Directory
+		}
+		default {
+			throw "Layout $_ not handled"
+		}
+	}
+}
+
 function GetFilename($file) {
 	if( $file.path -is [System.Collections.Generic.List[psobject]] ) {
 		[System.IO.Path]::Combine([string[]]($file.path | % { $_.string }))
@@ -20,7 +72,9 @@ function Test-TorrentData {
 		[System.Text.Encoding] $Encoding = [System.Text.Encoding]::UTF8,
 		[Parameter(HelpMessage = 'Directory where torrent data files are stored.')]
 		[ValidateScript({ Test-Path -LiteralPath $_ })]
-		[String] $DataDirectory
+		[String] $DataDirectory,
+		[Parameter(HelpMessage = "Content layout defined in qBittorrent")]
+		[ContentLayout] $ContentLayout = [ContentLayout]::Original
 	)
 
 	begin {
@@ -51,7 +105,9 @@ function Test-TorrentData {
 			$piecesCount = $Torrent.info.pieces.bytestring.Length / 20
 
 			if( $Torrent.info.files -eq $null ) {
-				$TargetFile = Join-Path $resolvedDataDirectoryPath $Torrent.info.name.string
+				$TargetDirectory = GetTargetDirectory $ContentLayout $Torrent $resolvedDataDirectoryPath
+				$TargetFile = Join-Path $TargetDirectory $Torrent.info.name.string
+				$TargetFile = Remove-InvalidPathChars($TargetFile)
 				Write-Debug "Opening file $TargetFile"
 				try {
 					$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
@@ -89,10 +145,13 @@ function Test-TorrentData {
 				try {
 					# Multiple files torrent
 					$hasher = [System.Security.Cryptography.HashAlgorithm]::Create('SHA1')
+					$TargetDirectory = GetTargetDirectory $ContentLayout $Torrent $resolvedDataDirectoryPath
+					Write-Debug "Target directory : $TargetDirectory"
 					$f = 0
 					$file = $Torrent.info.files[$f]
 					$filename = GetFilename $file
-					$TargetFile = Join-Path $resolvedDataDirectoryPath $filename
+					$TargetFile = Join-Path $TargetDirectory $filename
+					$TargetFile = Remove-InvalidPathChars($TargetFile)
 					Write-Debug "Opening file $TargetFile"
 					$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
 					$br = [System.IO.BinaryReader]::new($fs)
@@ -109,7 +168,8 @@ function Test-TorrentData {
 							$f++
 							$file = $Torrent.info.files[$f]
 							$filename = GetFilename $file
-							$TargetFile = Join-Path $resolvedDataDirectoryPath $filename
+							$TargetFile = Join-Path $TargetDirectory $filename
+							$TargetFile = Remove-InvalidPathChars($TargetFile)
 							Write-Debug "Opening file $TargetFile"
 							$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
 							$br = [System.IO.BinaryReader]::new($fs)
