@@ -1,7 +1,7 @@
-# Run with pwsh.exe -NonInteractive -File .\tests\test.ps1
+# Run with pwsh.exe -NonInteractive -File ./tests/test.ps1
 
-Import-Module "$PSScriptRoot\..\Wv.BencodeKit" -Force
-Import-Module "$PSScriptRoot\..\TorrentChecker" -Force
+Import-Module "$PSScriptRoot/../Wv.BencodeKit" -Force
+Import-Module "$PSScriptRoot/../TorrentChecker" -Force
 
 Function InitData {
 	param (
@@ -18,30 +18,30 @@ Function InitData {
 $DebugPreference = 'Continue'
 
 Function TestBencodedString([string]$Data, [string]$Filename, [string]$Msg, [scriptblock]$Test) {
-	$Data | Out-File -Path "$PSScriptRoot\$Filename" -NoNewLine
+	$Data | Out-File -Path "$PSScriptRoot/$Filename" -NoNewLine
 	try {
-		$bencoded = ConvertFrom-BencodedFile -FilePath "$PSScriptRoot\$Filename"
+		$bencoded = ConvertFrom-BencodedFile -FilePath "$PSScriptRoot/$Filename"
 		$result = @( $bencoded ) | ? $Test
 		if( $result.Length -eq 0 ) {
 			throw $Msg
 		}
 	}
 	finally {
-		Remove-Item -Path "$PSScriptRoot\$Filename"
+		Remove-Item -Path "$PSScriptRoot/$Filename"
 	}
 }
 
 function TestBencodedStringAsList([string]$Data, [string]$Filename, [string]$Msg, [scriptblock]$Test) {
-	$Data | Out-File -Path "$PSScriptRoot\$Filename" -NoNewLine
+	$Data | Out-File -Path "$PSScriptRoot/$Filename" -NoNewLine
 	try {
-		$bencoded = ConvertFrom-BencodedFile -FilePath "$PSScriptRoot\$Filename"
+		$bencoded = ConvertFrom-BencodedFile -FilePath "$PSScriptRoot/$Filename"
 		$result = @{ Value = $bencoded } | ? $Test
 		if( $result.Length -eq 0 ) {
 			throw $Msg
 		}
 	}
 	finally {
-		Remove-Item -Path "$PSScriptRoot\$Filename"
+		Remove-Item -Path "$PSScriptRoot/$Filename"
 	}
 }
 
@@ -64,107 +64,107 @@ TestBencodedStringAsList "l3:bare" "bencode_list_string.bin" "Decoding string li
 # Single file, full piece
 try {
 	$buffer = InitData (1 * 2 * 1024 * 1024) 1
-	New-Item -Type Directory -Path "$PSScriptRoot\01" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\01\01_single_file_single_full_piece.bin", $buffer)
-	if(!(Test-TorrentData -LiteralPath "$PSScriptRoot\01_single_file_single_full_piece.bin.torrent" -DataDirectory "$PSScriptRoot\01").Valid) {
+	New-Item -Type Directory -Path "$PSScriptRoot/01" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/01/01_single_file_single_full_piece.bin", $buffer)
+	if(!(Test-TorrentData -LiteralPath "$PSScriptRoot/01_single_file_single_full_piece.bin.torrent" -DataDirectory "$PSScriptRoot/01").Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\01\01_single_file_single_full_piece.bin"
+	Remove-Item -Path "$PSScriptRoot/01/01_single_file_single_full_piece.bin"
 }
 
 # Single file, size less than a piece
 try {
 	$buffer = InitData (0.6 * 2 * 1024 * 1024) 2
-	New-Item -Type Directory -Path "$PSScriptRoot\02" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\02\02_single_file_single_less_than_piece.bin", $buffer)
-	if(!(Test-TorrentData -LiteralPath "$PSScriptRoot\02_single_file_single_less_than_piece.bin.torrent" -DataDirectory "$PSScriptRoot\02").Valid) {
+	New-Item -Type Directory -Path "$PSScriptRoot/02" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/02/02_single_file_single_less_than_piece.bin", $buffer)
+	if(!(Test-TorrentData -LiteralPath "$PSScriptRoot/02_single_file_single_less_than_piece.bin.torrent" -DataDirectory "$PSScriptRoot/02").Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\02\02_single_file_single_less_than_piece.bin"
+	Remove-Item -Path "$PSScriptRoot/02/02_single_file_single_less_than_piece.bin"
 }
 
 # Single file, two full pieces
 try {
 	$buffer = InitData (2 * 2 * 1024 * 1024) 3
-	New-Item -Type Directory -Path "$PSScriptRoot\03" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\03\03_single_file_two_full_pieces.bin", $buffer)
-	if(!(Test-TorrentData -Path "$PSScriptRoot\03_single_file_two_full_pieces.bin.torrent" -DataDirectory "$PSScriptRoot\03").Valid) {
+	New-Item -Type Directory -Path "$PSScriptRoot/03" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/03/03_single_file_two_full_pieces.bin", $buffer)
+	if(!(Test-TorrentData -Path "$PSScriptRoot/03_single_file_two_full_pieces.bin.torrent" -DataDirectory "$PSScriptRoot/03").Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\03\03_single_file_two_full_pieces.bin"
+	Remove-Item -Path "$PSScriptRoot/03/03_single_file_two_full_pieces.bin"
 }
 
 # Single file, size less than two pieces
 try {
 	$buffer = InitData (1.6 * 2 * 1024 * 1024) 4
-	New-Item -Type Directory -Path "$PSScriptRoot\04" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\04\04_single_file_less_than_two_pieces.bin", $buffer)
-	if(!(Test-TorrentData -Path "$PSScriptRoot\04_single_file_less_than_two_pieces.bin.torrent" -DataDirectory "$PSScriptRoot\04").Valid) {
+	New-Item -Type Directory -Path "$PSScriptRoot/04" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/04/04_single_file_less_than_two_pieces.bin", $buffer)
+	if(!(Test-TorrentData -Path "$PSScriptRoot/04_single_file_less_than_two_pieces.bin.torrent" -DataDirectory "$PSScriptRoot/04").Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\04\04_single_file_less_than_two_pieces.bin"
+	Remove-Item -Path "$PSScriptRoot/04/04_single_file_less_than_two_pieces.bin"
 }
 
 # Two files, a full piece each
 try {
 	$buffer1 = InitData (2 * 2 * 1024 * 1024) 5
 	$buffer2 = InitData (2 * 2 * 1024 * 1024) 6
-	New-Item -Type Directory -Path "$PSScriptRoot\05" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\05\05_two_files_single_full_piece_1.bin", $buffer1)
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\05\05_two_files_single_full_piece_2.bin", $buffer2)
-	if(!(Test-TorrentData -Path "$PSScriptRoot\05.torrent" -DataDirectory "$PSScriptRoot").Valid) {
+	New-Item -Type Directory -Path "$PSScriptRoot/05" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/05/05_two_files_single_full_piece_1.bin", $buffer1)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/05/05_two_files_single_full_piece_2.bin", $buffer2)
+	if(!(Test-TorrentData -Path "$PSScriptRoot/05.torrent" -DataDirectory "$PSScriptRoot").Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\05\05_two_files_single_full_piece_1.bin"
-	Remove-Item -Path "$PSScriptRoot\05\05_two_files_single_full_piece_2.bin"
+	Remove-Item -Path "$PSScriptRoot/05/05_two_files_single_full_piece_1.bin"
+	Remove-Item -Path "$PSScriptRoot/05/05_two_files_single_full_piece_2.bin"
 }
 
 # Two files, a shared piece
 try {
 	$buffer1 = InitData (0.7 * 2 * 1024 * 1024) 7
 	$buffer2 = InitData (1.3 * 2 * 1024 * 1024) 8
-	New-Item -Type Directory -Path "$PSScriptRoot\06" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\06\06_1_two_files_less than_a_piece.bin", $buffer1)
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\06\06_2_two_files_more_than_a_piece.bin", $buffer2)
-	if(!(Test-TorrentData -Path "$PSScriptRoot\06.torrent" -DataDirectory "$PSScriptRoot").Valid) {
+	New-Item -Type Directory -Path "$PSScriptRoot/06" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/06/06_1_two_files_less than_a_piece.bin", $buffer1)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/06/06_2_two_files_more_than_a_piece.bin", $buffer2)
+	if(!(Test-TorrentData -Path "$PSScriptRoot/06.torrent" -DataDirectory "$PSScriptRoot").Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\06\06_1_two_files_less than_a_piece.bin"
-	Remove-Item -Path "$PSScriptRoot\06\06_2_two_files_more_than_a_piece.bin"
+	Remove-Item -Path "$PSScriptRoot/06/06_1_two_files_less than_a_piece.bin"
+	Remove-Item -Path "$PSScriptRoot/06/06_2_two_files_more_than_a_piece.bin"
 }
 
 # Nested folders - Each file is a single piece
 # 1 MiB piece / 1 MiB file
 try {
-	New-Item -Type Directory -Path "$PSScriptRoot\07\1" -Force | Out-Null
-	New-Item -Type Directory -Path "$PSScriptRoot\07\2\1" -Force | Out-Null
-	New-Item -Type Directory -Path "$PSScriptRoot\07\2\2" -Force | Out-Null
+	New-Item -Type Directory -Path "$PSScriptRoot/07/1" -Force | Out-Null
+	New-Item -Type Directory -Path "$PSScriptRoot/07/2/1" -Force | Out-Null
+	New-Item -Type Directory -Path "$PSScriptRoot/07/2/2" -Force | Out-Null
 	$buffer1 = InitData (1 * 1024 * 1024) 9
 	$buffer2 = InitData (1 * 1024 * 1024) 10
 	$buffer3 = InitData (1 * 1024 * 1024) 11
 	$buffer4 = InitData (1 * 1024 * 1024) 12
 	$buffer5 = InitData (1 * 1024 * 1024) 13
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\07\root.bin", $buffer1)
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\07\1\1.bin", $buffer2)
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\07\2\1.bin", $buffer3)
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\07\2\1\2_1.bin", $buffer4)
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\07\2\2\2_2.bin", $buffer5)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/07/root.bin", $buffer1)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/07/1/1.bin", $buffer2)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/07/2/1.bin", $buffer3)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/07/2/1/2_1.bin", $buffer4)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/07/2/2/2_2.bin", $buffer5)
 
-	if(!(Test-TorrentData -Path "$PSScriptRoot\07.torrent" -DataDirectory "$PSScriptRoot").Valid) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot/07.torrent" -DataDirectory "$PSScriptRoot").Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item "$PSScriptRoot\07\root.bin"
-	Remove-Item "$PSScriptRoot\07\1\1.bin"
-	Remove-Item "$PSScriptRoot\07\2\1.bin"
-	Remove-Item "$PSScriptRoot\07\2\1\2_1.bin"
-	Remove-Item "$PSScriptRoot\07\2\2\2_2.bin"
+	Remove-Item "$PSScriptRoot/07/root.bin"
+	Remove-Item "$PSScriptRoot/07/1/1.bin"
+	Remove-Item "$PSScriptRoot/07/2/1.bin"
+	Remove-Item "$PSScriptRoot/07/2/1/2_1.bin"
+	Remove-Item "$PSScriptRoot/07/2/2/2_2.bin"
 }
 
 # Nested folders - Files with shared piece
@@ -178,58 +178,58 @@ try {
 # +--------+---------+---+---+-----+--------------------+----+
 
 try {
-	New-Item -Type Directory -Path "$PSScriptRoot\08\1" -Force | Out-Null
-	New-Item -Type Directory -Path "$PSScriptRoot\08\2\1" -Force | Out-Null
-	New-Item -Type Directory -Path "$PSScriptRoot\08\2\2\2" -Force | Out-Null
+	New-Item -Type Directory -Path "$PSScriptRoot/08/1" -Force | Out-Null
+	New-Item -Type Directory -Path "$PSScriptRoot/08/2/1" -Force | Out-Null
+	New-Item -Type Directory -Path "$PSScriptRoot/08/2/2/2" -Force | Out-Null
 	$buffer = InitData (20 * 1024 * 1024) 14
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\08\root.bin", $buffer[0..(4mb-1)])
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\08\1\1.bin", $buffer[4mb..(6mb-1)])
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\08\2\1.bin", $buffer[6mb..(7mb-1)])
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\08\2\1\2_1.bin", $buffer[7mb..(10mb-1)])
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\08\2\2\2_2.bin", $buffer[10mb..(18mb-1)])
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\08\2\2\2\2_2_2.bin", $buffer[18mb..(20mb-1)])
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/08/root.bin", $buffer[0..(4mb-1)])
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/08/1/1.bin", $buffer[4mb..(6mb-1)])
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/08/2/1.bin", $buffer[6mb..(7mb-1)])
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/08/2/1/2_1.bin", $buffer[7mb..(10mb-1)])
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/08/2/2/2_2.bin", $buffer[10mb..(18mb-1)])
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/08/2/2/2/2_2_2.bin", $buffer[18mb..(20mb-1)])
 
-	if(!(Test-TorrentData -Path "$PSScriptRoot\08.torrent" -DataDirectory "$PSScriptRoot").Valid) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot/08.torrent" -DataDirectory "$PSScriptRoot").Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item "$PSScriptRoot\08\root.bin"
-	Remove-Item "$PSScriptRoot\08\1\1.bin"
-	Remove-Item "$PSScriptRoot\08\2\1.bin"
-	Remove-Item "$PSScriptRoot\08\2\1\2_1.bin"
-	Remove-Item "$PSScriptRoot\08\2\2\2_2.bin"
-	Remove-Item "$PSScriptRoot\08\2\2\2\2_2_2.bin"
+	Remove-Item "$PSScriptRoot/08/root.bin"
+	Remove-Item "$PSScriptRoot/08/1/1.bin"
+	Remove-Item "$PSScriptRoot/08/2/1.bin"
+	Remove-Item "$PSScriptRoot/08/2/1/2_1.bin"
+	Remove-Item "$PSScriptRoot/08/2/2/2_2.bin"
+	Remove-Item "$PSScriptRoot/08/2/2/2/2_2_2.bin"
 }
 
 # Unicode characters
 try {
-	New-Item -Type Directory -Path "$PSScriptRoot\09" -Force | Out-Null
+	New-Item -Type Directory -Path "$PSScriptRoot/09" -Force | Out-Null
 	$buffer = InitData (1024 * 1024) 15
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\09\じどうはんばいき、自動販売機.bin", $buffer)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/09/じどうはんばいき、自動販売機.bin", $buffer)
 
-	if(!(Test-TorrentData -Path "$PSScriptRoot\09.torrent" -DataDirectory "$PSScriptRoot").Valid) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot/09.torrent" -DataDirectory "$PSScriptRoot").Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item "$PSScriptRoot\09\じどうはんばいき、自動販売機.bin"
+	Remove-Item "$PSScriptRoot/09/じどうはんばいき、自動販売機.bin"
 }
 
 # Check for invalid byte
 try {
-	New-Item -Type Directory -Path "$PSScriptRoot\10" -Force | Out-Null
+	New-Item -Type Directory -Path "$PSScriptRoot/10" -Force | Out-Null
 	$buffer = InitData (1024 * 1024) 16
 	$buffer[$buffer.Length - 1] = $buffer[$buffer.Length - 1] -bxor 255
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\10\1.bin", $buffer)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/10/1.bin", $buffer)
 
-	if((Test-TorrentData -Path "$PSScriptRoot\10.torrent" -DataDirectory "$PSScriptRoot").Valid) {
+	if((Test-TorrentData -Path "$PSScriptRoot/10.torrent" -DataDirectory "$PSScriptRoot").Valid) {
 		throw "Test failed : check should fail"
 	}
 } finally {
-	Remove-Item "$PSScriptRoot\10\1.bin"
+	Remove-Item "$PSScriptRoot/10/1.bin"
 }
 
 try {
-	Test-TorrentData -Path "$PSScriptRoot\05.torrent" -LiteralPath "$PSScriptRoot\05.torrent"
+	Test-TorrentData -Path "$PSScriptRoot/05.torrent" -LiteralPath "$PSScriptRoot/05.torrent"
 	throw "Test failed : should fail because Path and LiteralPath are specified at the same time"
 } catch {
 	if( $_.Exception.ErrorId -ne "AmbiguousParameterSet" ) {
@@ -240,21 +240,21 @@ try {
 # Multiple checks
 try {
 	$buffer1 = InitData (1 * 2 * 1024 * 1024) 1
-	New-Item -Type Directory -Path "$PSScriptRoot\01" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\01_single_file_single_full_piece.bin", $buffer1)
+	New-Item -Type Directory -Path "$PSScriptRoot/01" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/01_single_file_single_full_piece.bin", $buffer1)
 
 	$buffer2 = InitData (0.6 * 2 * 1024 * 1024) 2
-	New-Item -Type Directory -Path "$PSScriptRoot\02" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\02_single_file_single_less_than_piece.bin", $buffer2)
+	New-Item -Type Directory -Path "$PSScriptRoot/02" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/02_single_file_single_less_than_piece.bin", $buffer2)
 
-	$r = Test-TorrentData -Path "$PSScriptRoot\0[12]_single_file_single*.torrent" -DataDirectory "$PSScriptRoot"
+	$r = Test-TorrentData -Path "$PSScriptRoot/0[12]_single_file_single*.torrent" -DataDirectory "$PSScriptRoot"
 	$r.Path
 	if( ($r.Valid | ? { $_ }).Length -ne 2 ) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\01_single_file_single_full_piece.bin"
-	Remove-Item -Path "$PSScriptRoot\02_single_file_single_less_than_piece.bin"
+	Remove-Item -Path "$PSScriptRoot/01_single_file_single_full_piece.bin"
+	Remove-Item -Path "$PSScriptRoot/02_single_file_single_less_than_piece.bin"
 }
 
 ########################################
@@ -267,29 +267,29 @@ try {
 try {
 	$buffer1 = InitData (1024 * 1024) 17
 	$buffer2 = InitData (1024 * 1024) 18
-	New-Item -Type Directory -Path "$PSScriptRoot\11" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\11\1.bin", $buffer1)
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\11\2.bin", $buffer2)
+	New-Item -Type Directory -Path "$PSScriptRoot/11" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/11/1.bin", $buffer1)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/11/2.bin", $buffer2)
 
-	if(!(Test-TorrentData -Path "$PSScriptRoot\11.torrent" -DataDirectory "$PSScriptRoot\11" -ContentLayout NoSubFolder).Valid) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot/11.torrent" -DataDirectory "$PSScriptRoot/11" -ContentLayout NoSubFolder).Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\11\1.bin"
-	Remove-Item -Path "$PSScriptRoot\11\2.bin"
+	Remove-Item -Path "$PSScriptRoot/11/1.bin"
+	Remove-Item -Path "$PSScriptRoot/11/2.bin"
 }
 
 # Single file, a full piece each
 try {
 	$buffer = InitData (1024 * 1024) 19
-	New-Item -Type Directory -Path "$PSScriptRoot\12" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\12\1.bin", $buffer)
+	New-Item -Type Directory -Path "$PSScriptRoot/12" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/12/1.bin", $buffer)
 
-	if(!(Test-TorrentData -Path "$PSScriptRoot\12.torrent" -DataDirectory "$PSScriptRoot" -ContentLayout CreateSubFolder).Valid) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot/12.torrent" -DataDirectory "$PSScriptRoot" -ContentLayout CreateSubFolder).Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\12\1.bin"
+	Remove-Item -Path "$PSScriptRoot/12/1.bin"
 }
 
 ########################################
@@ -301,27 +301,27 @@ try {
 # File with invalid character
 try {
 	$buffer = InitData (1024 * 1024) 20
-	New-Item -Type Directory -Path "$PSScriptRoot\13" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\13\a_b.bin", $buffer)
+	New-Item -Type Directory -Path "$PSScriptRoot/13" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/13/a_b.bin", $buffer)
 
-	if(!(Test-TorrentData -Path "$PSScriptRoot\13.torrent" -DataDirectory "$PSScriptRoot").Valid) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot/13.torrent" -DataDirectory "$PSScriptRoot").Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\13\a_b.bin"
+	Remove-Item -Path "$PSScriptRoot/13/a_b.bin"
 }
 
 # File with invalid charater in path
 try {
 	$buffer = InitData (1024 * 1024) 21
-	New-Item -Type Directory -Path "$PSScriptRoot\14\a_b" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\14\a_b\1.bin", $buffer)
+	New-Item -Type Directory -Path "$PSScriptRoot/14/a_b" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/14/a_b/1.bin", $buffer)
 	Pause
-	if(!(Test-TorrentData -Path "$PSScriptRoot\14.torrent" -DataDirectory "$PSScriptRoot").Valid) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot/14.torrent" -DataDirectory "$PSScriptRoot").Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\14\a_b\1.bin"
+	Remove-Item -Path "$PSScriptRoot/14/a_b/1.bin"
 }
 
 ########################################
@@ -335,28 +335,28 @@ try {
 
 try {
 	$buffer = InitData (1024 * 1024) 22
-	New-Item -Type Directory -Path "$PSScriptRoot\15" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\15\1.bin", $buffer)
+	New-Item -Type Directory -Path "$PSScriptRoot/15" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/15/1.bin", $buffer)
 
-	if(!(Test-TorrentData -Path "$PSScriptRoot\15.torrent" -DataDirectory "$PSScriptRoot\15" -ContentLayout NoSubFolder).Valid) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot/15.torrent" -DataDirectory "$PSScriptRoot/15" -ContentLayout NoSubFolder).Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\15\1.bin"
+	Remove-Item -Path "$PSScriptRoot/15/1.bin"
 }
 
 # singe file
 
 try {
 	$buffer = InitData (1024 * 1024) 23
-	New-Item -Type Directory -Path "$PSScriptRoot\16" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\16\16.bin", $buffer)
+	New-Item -Type Directory -Path "$PSScriptRoot/16" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/16/16.bin", $buffer)
 
-	if(!(Test-TorrentData -Path "$PSScriptRoot\16.torrent" -DataDirectory "$PSScriptRoot" -ContentLayout CreateSubFolder).Valid) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot/16.torrent" -DataDirectory "$PSScriptRoot" -ContentLayout CreateSubFolder).Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\16\16.bin"
+	Remove-Item -Path "$PSScriptRoot/16/16.bin"
 }
 
 # multiple files
@@ -364,29 +364,29 @@ try {
 try {
 	$buffer1 = InitData (1024 * 1024) 24
 	$buffer2 = InitData (1024 * 1024) 25
-	New-Item -Type Directory -Path "$PSScriptRoot\17" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\17\1.bin", $buffer1)
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\17\2.bin", $buffer2)
+	New-Item -Type Directory -Path "$PSScriptRoot/17" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/17/1.bin", $buffer1)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/17/2.bin", $buffer2)
 
-	if(!(Test-TorrentData -Path "$PSScriptRoot\17.torrent" -DataDirectory "$PSScriptRoot\17" -ContentLayout NoSubFolder).Valid) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot/17.torrent" -DataDirectory "$PSScriptRoot/17" -ContentLayout NoSubFolder).Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\17\1.bin"
-	Remove-Item -Path "$PSScriptRoot\17\2.bin"
+	Remove-Item -Path "$PSScriptRoot/17/1.bin"
+	Remove-Item -Path "$PSScriptRoot/17/2.bin"
 }
 
 try {
 	$buffer1 = InitData (1024 * 1024) 26
 	$buffer2 = InitData (1024 * 1024) 27
-	New-Item -Type Directory -Path "$PSScriptRoot\18" -Force | Out-Null
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\18\1.bin", $buffer1)
-	[System.IO.File]::WriteAllBytes("$PSScriptRoot\18\2.bin", $buffer2)
+	New-Item -Type Directory -Path "$PSScriptRoot/18" -Force | Out-Null
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/18/1.bin", $buffer1)
+	[System.IO.File]::WriteAllBytes("$PSScriptRoot/18/2.bin", $buffer2)
 
-	if(!(Test-TorrentData -Path "$PSScriptRoot\18.torrent" -DataDirectory "$PSScriptRoot" -ContentLayout CreateSubFolder).Valid) {
+	if(!(Test-TorrentData -Path "$PSScriptRoot/18.torrent" -DataDirectory "$PSScriptRoot" -ContentLayout CreateSubFolder).Valid) {
 		throw "Test failed"
 	}
 } finally {
-	Remove-Item -Path "$PSScriptRoot\18\1.bin"
-	Remove-Item -Path "$PSScriptRoot\18\2.bin"
+	Remove-Item -Path "$PSScriptRoot/18/1.bin"
+	Remove-Item -Path "$PSScriptRoot/18/2.bin"
 }
