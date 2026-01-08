@@ -9,16 +9,22 @@ enum ContentLayout {
 	NoSubFolder
 }
 
-function Remove-InvalidPathChars($Path) {
+function Remove-InvalidPathChars([string]$Path) {
 	$InvalidPathChars = [IO.Path]::GetInvalidPathChars() -join ''
-	$InvalidFileNameChars = [IO.Path]::GetInvalidFileNameChars() -join ''
 
 	$regexPath = "[{0}]" -f [regex]::Escape($InvalidPathChars)
-	$regexFileName = "[{0}]" -f [regex]::Escape($InvalidFileNameChars)
-	$fi = [System.IO.FileInfo]$Path
 
 	# qBittorrent replaces invalid chars with underscores
-	Join-Path ($fi.DirectoryName -replace $regexPath,'_') ($fi.Name -replace $regexFileName,'_')
+	$Path -replace $regexPath,'_'
+}
+
+function Remove-InvalidFileNameChars([string]$Name) {
+	$InvalidFileNameChars = [IO.Path]::GetInvalidFileNameChars() -join ''
+
+	$regexFileName = "[{0}]" -f [regex]::Escape($InvalidFileNameChars)
+
+	# qBittorrent replaces invalid chars with underscores
+	$Name -replace $regexFileName,'_'
 }
 
 function GetTargetDirectory([ContentLayout]$ContentLayout, $Torrent, $Directory) {
@@ -29,16 +35,16 @@ function GetTargetDirectory([ContentLayout]$ContentLayout, $Torrent, $Directory)
 				$Directory
 			} else {
 				# single file in a directory or multiple files
-				Join-Path $Directory $Torrent.info.name.string
+				Join-Path $Directory (Remove-InvalidPathChars $Torrent.info.name.string)
 			}
 		}
 		([ContentLayout]::CreateSubFolder) {
 			if( $Torrent.info.files -eq $null ) {
 				# single file : use file base name
-				Join-Path $Directory ([System.IO.Path]::GetFileNameWithoutExtension($Torrent.info.name.string))
+				Join-Path $Directory (Remove-InvalidPathChars ([System.IO.Path]::GetFileNameWithoutExtension($Torrent.info.name.string)))
 			} else {
 				# same as Original : single file in a directory or multiple files
-				Join-Path $Directory $Torrent.info.name.string
+				Join-Path $Directory (Remove-InvalidPathChars $Torrent.info.name.string)
 			}
 		}
 		([ContentLayout]::NoSubFolder) {
@@ -52,9 +58,9 @@ function GetTargetDirectory([ContentLayout]$ContentLayout, $Torrent, $Directory)
 
 function GetFilename($file) {
 	if( $file.path -is [System.Collections.Generic.List[psobject]] ) {
-		[System.IO.Path]::Combine([string[]]($file.path | % { $_.string }))
+		[System.IO.Path]::Combine([string[]]($file.path | % { Remove-InvalidPathChars $_.string }))
 	} else {
-		$file.path.string
+		Remove-InvalidFileNameChars $file.path.string
 	}
 }
 
@@ -106,8 +112,7 @@ function Test-TorrentData {
 
 			if( $Torrent.info.files -eq $null ) {
 				$TargetDirectory = GetTargetDirectory $ContentLayout $Torrent $resolvedDataDirectoryPath
-				$TargetFile = Join-Path $TargetDirectory $Torrent.info.name.string
-				$TargetFile = Remove-InvalidPathChars($TargetFile)
+				$TargetFile = Join-Path $TargetDirectory (Remove-InvalidFileNameChars $Torrent.info.name.string)
 				Write-Debug "Opening file $TargetFile"
 				try {
 					$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
@@ -151,7 +156,6 @@ function Test-TorrentData {
 					$file = $Torrent.info.files[$f]
 					$filename = GetFilename $file
 					$TargetFile = Join-Path $TargetDirectory $filename
-					$TargetFile = Remove-InvalidPathChars($TargetFile)
 					Write-Debug "Opening file $TargetFile"
 					$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
 					$br = [System.IO.BinaryReader]::new($fs)
@@ -169,7 +173,6 @@ function Test-TorrentData {
 							$file = $Torrent.info.files[$f]
 							$filename = GetFilename $file
 							$TargetFile = Join-Path $TargetDirectory $filename
-							$TargetFile = Remove-InvalidPathChars($TargetFile)
 							Write-Debug "Opening file $TargetFile"
 							$fs = [System.IO.FileStream]::new($TargetFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
 							$br = [System.IO.BinaryReader]::new($fs)
