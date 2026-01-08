@@ -41,5 +41,5 @@ jobs:
       - name: Install Powershell 5/5
         run: rm powershell_7.5.4-1.deb_amd64.deb
 
-      - name: Install Powershell 1/5
-        run: pwsh ./tests/tests.ps1
+      - name: Running tests...
+        run: pwsh -NonInteractive -File ./tests/tests.ps1
