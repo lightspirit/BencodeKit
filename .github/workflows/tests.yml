@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "trunk", "ci" ]
+    branches: [ "trunk", "feat/**" ]
   pull_request:
-    branches: [ "trunk", "ci" ]
+    branches: [ "trunk", "feat/**" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Powershell 1/5
-        run: sudo apt-get update && sudo apt-get install -y wget
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y wget
 
       - name: Install Powershell 2/5
         run: wget https://github.com/PowerShell/PowerShell/releases/download/v7.5.4/powershell_7.5.4-1.deb_amd64.deb
