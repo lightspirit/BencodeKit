@@ -1,5 +1,7 @@
 # Run with pwsh.exe -NonInteractive -File ./tests/test.ps1
 
+$ErrorActionPreference = "Stop"
+
 Import-Module "$PSScriptRoot/../Wv.BencodeKit" -Force
 Import-Module "$PSScriptRoot/../TorrentChecker" -Force
 
