@@ -2,8 +2,8 @@
 
 $ErrorActionPreference = "Stop"
 
-Import-Module "$PSScriptRoot/../Wv.BencodeKit" -Force
-Import-Module "$PSScriptRoot/../TorrentChecker" -Force
+Import-Module "$PSScriptRoot/../../../Wv.BencodeKit" -Force
+Import-Module "$PSScriptRoot/../../../TorrentChecker" -Force
 
 Function InitData {
 	param (
