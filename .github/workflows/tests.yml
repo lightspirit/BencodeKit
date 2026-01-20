@@ -34,7 +34,7 @@ jobs:
         run: rm powershell_7.5.4-1.deb_amd64.deb
 
       - name: Install test modules
-        run: Install-Module Pester,PSScriptAnalyzer -Force
+        run: pwsh -NoLogo -NonInteractive -Command Install-Module Pester,PSScriptAnalyzer -Force
 
       - name: Run tests
         run: |
