@@ -33,5 +33,11 @@ jobs:
       - name: Install Powershell 5/5
         run: rm powershell_7.5.4-1.deb_amd64.deb
 
-      - name: Running tests...
-        run: pwsh -NoLogo -NonInteractive -File ./tests/test.ps1
+      - name: Install test modules
+        run: Install-Module Pester,PSScriptAnalyzer -Force
+
+      - name: Run tests
+        run: pwsh -NoLogo -NonInteractive -File ./TorrentChecker/Tests/Public/Test-TorrentData.Tests.ps1
+
+      - name: Run code analysis
+        run: pwsh -NoLogo -NonInteractive -File ./analyze.ps1
