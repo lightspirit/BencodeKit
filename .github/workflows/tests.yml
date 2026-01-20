@@ -37,7 +37,9 @@ jobs:
         run: Install-Module Pester,PSScriptAnalyzer -Force
 
       - name: Run tests
-        run: pwsh -NoLogo -NonInteractive -File ./TorrentChecker/Tests/Public/Test-TorrentData.Tests.ps1
+        run: |
+          pwsh -NoLogo -NonInteractive -File ./Wv.BencodeKit/Tests/Public/ConvertFrom-BencodedFile.Tests.ps1
+          pwsh -NoLogo -NonInteractive -File ./TorrentChecker/Tests/Public/Test-TorrentData.Tests.ps1
 
       - name: Run code analysis
         run: pwsh -NoLogo -NonInteractive -File ./analyze.ps1
